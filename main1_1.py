@@ -1,0 +1,79 @@
+import tkinter as gui
+from tkinter import ttk
+from pytube import YouTube
+import os
+import re
+import requests
+from io import BytesIO
+from PIL import Image, ImageTk
+
+
+class YDownloader:
+    """ YouTube Video Dowloader """
+    def __init__(self):
+        self.__window = gui.Tk()
+        self.attempts = 0
+        self.scren_setup()
+
+    def scren_setup(self):
+        self.__window.title('YouTube Video Downloader')
+        self.__window.iconbitmap('128.ico')
+        self.__window.geometry('800x600')
+        self.__window.maxsize(1920,1080)
+        self.__window.minsize(800, 640)
+        self.__programm_interface()
+        self.__window .mainloop()
+
+
+    def __programm_interface(self):
+        self.heard = gui.Frame(master = self.__window, width = 1920,  height = 1080, bg = '#708090')
+        self.greeting = gui.Label(master = self.heard, font='Arial 14', text='Вставьте ссылку на видео!', bg = '#708090', fg = '#F8F8FF')
+        self.greeting.pack()
+        self.video_shref = gui.Entry(master = self.heard, font='Arial 12', width=60)
+        self.video_shref.pack()
+        self.download_button = gui.Button(master = self.heard, text='скачать', width=16, height=2, font='Arial 18', bg="#FF6347", fg="#F8F8FF", command=self.get_shref).pack(pady=5)
+        self.heard.pack(fill=gui.BOTH, side=gui.LEFT, expand=True)
+
+
+    def get_shref(self):
+        video_url = (self.video_shref.get())
+        result1 = re.match(r'https://www.youtube.com', video_url)
+        result2 = re.match(r'https://youtu.be', video_url)
+        if result1 or result2 is not None:
+            obj = YouTube(video_url)
+            self.image_preview(obj)
+            self.video_download(obj)
+        else:
+            self.greeting['text'] = 'Эта ссылка не прошла проверку!'
+
+
+    def image_preview(self, img_obj):
+        """ imege preview """
+        link = (img_obj.thumbnail_url)
+        img_shref = requests.get(link)
+
+        if self.attempts == 0:
+            url_image = ImageTk.PhotoImage(Image.open(BytesIO(img_shref.content)))
+            self.img = gui.Label(master = self.heard, image = url_image)
+            self.img.configure(image=url_image)
+            self.img.image = url_image
+            self.img.pack(pady=10)
+        else:
+            url_image1 = ImageTk.PhotoImage(Image.open(BytesIO(img_shref.content)))
+            self.img.configure(image=url_image1)
+            self.img.image = url_image1
+
+
+
+    def video_download(self, video_obj):
+        """ download video """
+        self.greeting['text'] = 'Идёт скачивание видео.'
+        stream = video_obj.streams.get_highest_resolution()
+        user_dowlnoad = (f"{os.environ['USERPROFILE']}\\Downloads")
+        stream.download(user_dowlnoad)
+        self.greeting['text'] = 'Вставьте ссылку на видео!'
+        self.attempts += 1
+
+if __name__ == '__main__':
+    main = YDownloader()
+    main
